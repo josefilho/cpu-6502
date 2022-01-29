@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/cpu_6502.dir/main.cpp.o"
+  "CMakeFiles/cpu_6502.dir/main.cpp.o.d"
   "cpu_6502"
   "cpu_6502.pdb"
 )
