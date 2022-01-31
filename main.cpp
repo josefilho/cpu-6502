@@ -15,6 +15,11 @@ struct Mem{
       Data[i] = 0;
     }
   }
+
+  // Read 1 byte
+  Byte operator[]( u32 Address ) const{
+    return Data[Address]; // Assert here Address is < MAX_MEM
+  }
 };
 
 struct CPU{
@@ -40,8 +45,17 @@ struct CPU{
     memory.Initialise();
   }
 
-  void Execute( u32 Ticks, Mem& memory ){
-      
+  Byte FetchByte( u32 Cycles, Mem& memory ){
+    Byte Data = memory[PC];
+    ++PC,
+    --Cycles;
+    return Data;
+  }
+
+  void Execute( u32 Cycles, Mem& memory ){
+    while( Cycles > 0 ){
+      Byte Ins = FetchByte( Cycles, memory);
+    }
   }
 
 };
@@ -50,6 +64,6 @@ int main() {
   Mem mem;
   CPU cpu;
   cpu.Reset( mem );
-  cpu.Execute( mem );
+  cpu.Execute( 2, mem );
   return 0;
 }
