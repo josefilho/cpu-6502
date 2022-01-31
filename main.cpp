@@ -39,11 +39,17 @@ struct CPU{
 
     memory.Initialise();
   }
+
+  void Execute( u32 Ticks, Mem& memory ){
+      
+  }
+
 };
 
 int main() {
   Mem mem;
   CPU cpu;
   cpu.Reset( mem );
+  cpu.Execute( mem );
   return 0;
 }
