@@ -20,6 +20,11 @@ struct Mem{
   Byte operator[]( u32 Address ) const{
     return Data[Address]; // Assert here Address is < MAX_MEM
   }
+
+  // Write 1 byte
+  Byte& operator[]( u32 Address){
+    return Data[Address];
+  }
 };
 
 struct CPU{
@@ -52,9 +57,32 @@ struct CPU{
     return Data;
   }
 
+  Word FetchWord( u32 Cycles, Mem& memory ){
+    Word Data = memory[PC];
+    ++PC;
+    Data |= (memory[PC] << 8);
+    ++PC;
+    Cycles -= 2;
+    return Data;
+  }
+
+  Byte ReadByte( u32 Cycles, Byte Address, Mem& memory ){
+    Byte Data = memory[Address];
+    --Cycles;
+    return Data;
+  }
+
   // opcodes
   static constexpr Byte
-    INS_LDA_IM = 0xA9;
+    INS_LDA_IM = 0xA9,
+    INS_LDA_ZP = 0xA5,
+    INS_LDA_ZPX = 0xB5;
+
+
+  void LDASetStatus(){
+    Z = ( A == 0 );
+    N = (A & 0b10000000) > 0;
+  }
 
   void Execute( u32 Cycles, Mem& memory ){
     while( Cycles > 0 ){
@@ -63,8 +91,19 @@ struct CPU{
         case INS_LDA_IM: {
           Byte Value = FetchByte( Cycles, memory);
           A = Value;
-          Z = ( A == 0 );
-          N = (A & 0b10000000) > 0;
+          LDASetStatus();
+        } break;
+        case INS_LDA_ZP:{
+          Byte ZeroPageAddr = FetchByte( Cycles, memory );
+          A = ReadByte(Cycles, ZeroPageAddr, memory);
+          LDASetStatus();
+        } break;
+        case INS_LDA_ZPX:{
+          Byte ZeroPageAddr = FetchByte( Cycles, memory );
+          ZeroPageAddr += X;
+          --Cycles;
+          A = ReadByte(Cycles, ZeroPageAddr, memory);
+          LDASetStatus();
         } break;
         default: {
           printf("Instruction not handled %d", Ins);
@@ -72,12 +111,17 @@ struct CPU{
       }
     }
   }
-
 };
 
 int main() {
   Mem mem;
   CPU cpu;
+
+  // Start - inline program
+  mem[0xFFFC] = CPU::INS_LDA_IM;
+  mem[0xFFFD] = 0x42;
+  // End - inline program
+
   cpu.Reset( mem );
   cpu.Execute( 2, mem );
   return 0;
