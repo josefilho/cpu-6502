@@ -25,6 +25,13 @@ struct Mem{
   Byte& operator[]( u32 Address){
     return Data[Address];
   }
+
+  // Write 2 bytes
+  void WriteWord( Word Value, u32 Address, u32& Cycles ){
+    Data[Address] = Value & 0xFF;
+    Data[Address + 1] = (Value >> 8);
+    Cycles -= 2;
+  }
 };
 
 struct CPU{
@@ -76,7 +83,8 @@ struct CPU{
   static constexpr Byte
     INS_LDA_IM = 0xA9,
     INS_LDA_ZP = 0xA5,
-    INS_LDA_ZPX = 0xB5;
+    INS_LDA_ZPX = 0xB5,
+    INS_JSR = 0x20;
 
 
   void LDASetStatus(){
@@ -104,6 +112,12 @@ struct CPU{
           --Cycles;
           A = ReadByte(Cycles, ZeroPageAddr, memory);
           LDASetStatus();
+        } break;
+        case INS_JSR: {
+          Word SubAddr = FetchWord( Cycles, memory );
+          memory.WriteWord( PC - 1, SP, Cycles);
+          PC = SubAddr;
+          Cycles--;
         } break;
         default: {
           printf("Instruction not handled %d", Ins);
